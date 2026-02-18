@@ -87,19 +87,18 @@ export default function App() {
         </div>
 
         {/* Chart */}
-        <div className="overflow-x-auto">
-          <div style={{ minWidth: `${200 + countries.length * 48}px` }}>
+        <div>
           {/* Column header */}
-          <div className="flex items-end mb-3" style={{ paddingLeft: "200px" }}>
+          <div className="flex items-end mb-3" style={{ paddingLeft: "180px" }}>
             {countries.map(c => (
-              <div key={c.code} className="shrink-0 text-center" style={{ width: "48px" }}>
-                <span className="text-[8px] text-gray-700 tracking-wider">{shortName(c.name)}</span>
+              <div key={c.code} className="shrink-0 text-center" style={{ width: "clamp(32px, 4.2vw, 52px)" }}>
+                <span className="text-[8px] text-gray-700 tracking-wider whitespace-nowrap">{shortName(c.name)}</span>
               </div>
             ))}
           </div>
 
           {/* Separator */}
-          <div className="h-px mb-4" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 200px, rgba(255,255,255,0.04) 100%)" }} />
+          <div className="h-px mb-4" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 180px, rgba(255,255,255,0.04) 100%)" }} />
 
           {/* Rows */}
           {substances.map((s, i) => {
@@ -111,20 +110,20 @@ export default function App() {
                   onClick={() => setOpen(isOpen ? null : i)}
                 >
                   {/* Left label */}
-                  <div className="shrink-0 flex items-center gap-2 pr-4 py-[6px]" style={{ width: "200px" }}>
+                  <div className="shrink-0 flex items-center gap-2 pr-3 py-[6px]" style={{ width: "180px" }}>
                     <div className="w-[2px] h-[16px] rounded-full shrink-0 opacity-60" style={{ background: depColor(s.dependence) }} />
                     <span className="text-[11px] text-gray-500 truncate group-hover:text-gray-300 transition-colors">{s.name}</span>
                   </div>
 
                   {/* Cells */}
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-1">
                     {countries.map(c => {
                       const color = COLORS[classify(s[c.code])];
                       return (
-                        <div key={c.code} className="shrink-0 flex items-center justify-center" style={{ width: "48px", height: "26px" }}
+                        <div key={c.code} className="shrink-0 flex items-center justify-center" style={{ width: "clamp(32px, 4.2vw, 52px)", height: "26px" }}
                           title={`${shortName(c.name)}: ${s[c.code]}`}>
-                          <div className="w-[28px] h-[12px] rounded-[2px] transition-transform group-hover:scale-y-[1.3]"
-                            style={{ background: color, opacity: 0.8 }} />
+                          <div className="h-[12px] rounded-[2px] transition-transform group-hover:scale-y-[1.3]"
+                            style={{ background: color, opacity: 0.8, width: "clamp(20px, 3vw, 32px)" }} />
                         </div>
                       );
                     })}
@@ -133,7 +132,7 @@ export default function App() {
 
                 {/* Detail */}
                 {isOpen && (
-                  <div className="pb-6 pt-2" style={{ paddingLeft: "200px" }}>
+                  <div className="pb-6 pt-2" style={{ paddingLeft: "180px" }}>
                     <p className="text-[11px] text-gray-600 leading-[1.9] mb-5 max-w-2xl">{s.note}</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-8 gap-y-[5px]">
                       {countries.map(c => {
@@ -154,12 +153,11 @@ export default function App() {
 
                 {/* Row separator - subtle */}
                 {!isOpen && (i + 1) % 5 === 0 && i < substances.length - 1 && (
-                  <div className="h-px my-1" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 200px, rgba(255,255,255,0.03) 100%)" }} />
+                  <div className="h-px my-1" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 180px, rgba(255,255,255,0.03) 100%)" }} />
                 )}
               </div>
             );
           })}
-          </div>
         </div>
 
         {/* Footer */}
