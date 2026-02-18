@@ -88,6 +88,7 @@ export default function App() {
 
         {/* Chart */}
         <div className="overflow-x-auto">
+          <div style={{ minWidth: `${200 + countries.length * 48}px` }}>
           {/* Column header */}
           <div className="flex items-end mb-3" style={{ paddingLeft: "200px" }}>
             {countries.map(c => (
@@ -158,6 +159,7 @@ export default function App() {
               </div>
             );
           })}
+          </div>
         </div>
 
         {/* Footer */}
