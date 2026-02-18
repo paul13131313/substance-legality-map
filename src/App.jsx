@@ -57,6 +57,7 @@ const LEGEND = [
 
 export default function App() {
   const [open, setOpen] = useState(null);
+  const [hover, setHover] = useState(null);
 
   return (
     <div className="min-h-screen text-gray-200" style={{
@@ -92,7 +93,7 @@ export default function App() {
         {/* Chart */}
         <div>
           {/* Column header */}
-          <div className="flex items-end mb-3" style={{ paddingLeft: "180px" }}>
+          <div className="flex items-end mb-2" style={{ paddingLeft: "180px" }}>
             {countries.map(c => (
               <div key={c.code} className="shrink-0 text-center" style={{ width: "clamp(32px, 4.2vw, 52px)" }}>
                 <span className="text-[8px] text-gray-700 tracking-wider whitespace-nowrap">{shortName(c.name)}</span>
@@ -101,32 +102,48 @@ export default function App() {
           </div>
 
           {/* Separator */}
-          <div className="h-px mb-4" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 180px, rgba(255,255,255,0.04) 100%)" }} />
+          <div className="h-px mb-2" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 180px, rgba(255,255,255,0.04) 100%)" }} />
 
           {/* Rows */}
           {substances.map((s, i) => {
             const isOpen = open === i;
+            const isHover = hover === i;
             return (
               <div key={i}>
                 <div
                   className="flex items-center cursor-pointer group"
+                  style={{ position: "relative", zIndex: isHover ? 10 : 1 }}
                   onClick={() => setOpen(isOpen ? null : i)}
+                  onMouseEnter={() => setHover(i)}
+                  onMouseLeave={() => setHover(null)}
                 >
                   {/* Left label */}
-                  <div className="shrink-0 flex items-center gap-2 pr-3 py-[6px]" style={{ width: "180px" }}>
+                  <div className="shrink-0 flex items-center gap-2 pr-3 py-[3px]" style={{ width: "180px" }}>
                     <div className="w-[2px] h-[16px] rounded-full shrink-0 opacity-60" style={{ background: depColor(s.dependence) }} />
-                    <span className="text-[11px] text-gray-500 truncate group-hover:text-gray-300 transition-colors">{s.name}</span>
+                    <div className="min-w-0 flex items-baseline gap-1.5">
+                      {s.newFlag && <span className="text-[7px] tracking-[0.08em] font-semibold text-amber-600/70 uppercase shrink-0">new</span>}
+                      <span className="text-[11px] text-gray-500 truncate group-hover:text-gray-300 transition-colors">{s.name}</span>
+                    </div>
                   </div>
 
                   {/* Cells */}
-                  <div className="flex items-center flex-1">
-                    {countries.map(c => {
+                  <div className="flex items-center flex-1" style={{ gap: "1px" }}>
+                    {countries.map((c, ci) => {
                       const key = classify(s[c.code]);
                       return (
-                        <div key={c.code} className="shrink-0 flex items-center justify-center" style={{ width: "clamp(32px, 4.2vw, 52px)", height: "26px" }}
+                        <div key={c.code} className="shrink-0 flex items-center justify-center"
+                          style={{ width: "clamp(30px, 4.1vw, 52px)", height: "22px" }}
                           title={`${shortName(c.name)}: ${s[c.code]}`}>
-                          <div className="h-[12px] rounded-[2px] transition-transform group-hover:scale-y-[1.3]"
-                            style={{ background: grad(key), opacity: 0.85, width: "clamp(20px, 3vw, 32px)" }} />
+                          <div className="cell-block rounded-[2px]"
+                            style={{
+                              background: grad(key),
+                              opacity: 0.88,
+                              width: "clamp(26px, 3.6vw, 44px)",
+                              height: "14px",
+                              filter: isHover ? `blur(0.3px) brightness(1.15) saturate(1.2)` : "none",
+                              transform: isHover ? `scale(1.08) rotate(${(ci % 3 - 1) * 0.5}deg)` : "none",
+                              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                            }} />
                         </div>
                       );
                     })}
@@ -135,18 +152,18 @@ export default function App() {
 
                 {/* Detail */}
                 {isOpen && (
-                  <div className="pb-6 pt-2" style={{ paddingLeft: "180px" }}>
-                    <p className="text-[11px] text-gray-600 leading-[1.9] mb-5 max-w-2xl">{s.note}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-8 gap-y-[5px]">
+                  <div className="pb-5 pt-2" style={{ paddingLeft: "180px" }}>
+                    <p className="text-[11px] text-gray-600 leading-[1.9] mb-4 max-w-2xl text-left">{s.note}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-[4px]">
                       {countries.map(c => {
                         const key = classify(s[c.code]);
                         return (
-                          <div key={c.code} className="flex items-start gap-2">
-                            <span className="w-[5px] h-[5px] rounded-[1px] shrink-0 mt-[5px]" style={{ background: flat(key) }} />
-                            <div className="min-w-0">
-                              <span className="text-[9px] text-gray-700">{shortName(c.name)}</span>
-                              <span className="text-[9px] text-gray-600 ml-1.5 truncate" title={s[c.code]}>{s[c.code]}</span>
-                            </div>
+                          <div key={c.code} className="flex items-center gap-1.5">
+                            <span className="w-[6px] h-[6px] rounded-[1px] shrink-0" style={{ background: flat(key) }} />
+                            <span className="text-[9px] text-gray-600 truncate" title={s[c.code]}>
+                              <span className="text-gray-700">{shortName(c.name)}</span>
+                              {" "}{s[c.code]}
+                            </span>
                           </div>
                         );
                       })}
@@ -156,7 +173,7 @@ export default function App() {
 
                 {/* Row separator - subtle */}
                 {!isOpen && (i + 1) % 5 === 0 && i < substances.length - 1 && (
-                  <div className="h-px my-1" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 180px, rgba(255,255,255,0.03) 100%)" }} />
+                  <div className="h-px my-0.5" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 180px, rgba(255,255,255,0.03) 100%)" }} />
                 )}
               </div>
             );
@@ -166,7 +183,7 @@ export default function App() {
         {/* Footer */}
         <footer className="py-20 mt-16">
           <div className="h-px mb-12" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)" }} />
-          <p className="text-[10px] text-gray-800 text-center leading-[2]">
+          <p className="text-[10px] text-gray-800 text-left leading-[2]">
             法律は随時変更されます — 参考情報のみ<br />
             渡航・ビジネスの判断には各国公式情報をご確認ください
           </p>
