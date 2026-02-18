@@ -153,13 +153,13 @@ export default function App() {
                 {isOpen && (
                   <div className="pb-5 pt-2" style={{ paddingLeft: "180px" }}>
                     <p className="text-[11px] text-gray-600 leading-[1.9] mb-4 max-w-2xl text-left">{s.note}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-[4px]">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-[4px]">
                       {countries.map(c => {
                         const key = classify(s[c.code]);
                         return (
-                          <div key={c.code} className="flex items-center gap-1.5">
-                            <span className="w-[6px] h-[6px] rounded-[1px] shrink-0" style={{ background: flat(key) }} />
-                            <span className="text-[9px] text-gray-600 truncate" title={s[c.code]}>
+                          <div key={c.code} className="flex items-start gap-1.5">
+                            <span className="w-[6px] h-[6px] rounded-[1px] shrink-0 mt-[4px]" style={{ background: flat(key) }} />
+                            <span className="text-[9px] text-gray-600 leading-[1.6]">
                               <span className="text-gray-700">{shortName(c.name)}</span>
                               {" "}{s[c.code]}
                             </span>
