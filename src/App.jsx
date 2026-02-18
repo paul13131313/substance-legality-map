@@ -49,11 +49,11 @@ const depColor = (d) => {
 
 const shortName = (name) => name.replace(/^.+\s/, "");
 
-const LEGEND = [
-  ["legal","合法"],["defacto","容認"],["partial","一部合法"],
-  ["prescription","処方/医療"],["banMedical","禁/医療可"],["decrim","非犯罪化"],
-  ["grey","グレー"],["banned","禁止"],["death","厳罰/死刑"],
-];
+const LABEL = {
+  death: "死刑", severe: "厳罰", banned: "禁止", inhale: "禁止",
+  banMedical: "禁/医", decrim: "非犯", prescription: "処方", medicalOnly: "医療",
+  partial: "一部", grey: "灰", defacto: "容認", legal: "合法", unknown: "",
+};
 
 export default function App() {
   const [open, setOpen] = useState(null);
@@ -79,16 +79,6 @@ export default function App() {
       </header>
 
       <div className="max-w-[1600px] mx-auto px-8">
-
-        {/* Legend */}
-        <div className="flex items-center gap-5 mb-14 flex-wrap">
-          {LEGEND.map(([k, l]) => (
-            <div key={k} className="flex items-center gap-1.5">
-              <span className="w-[8px] h-[8px] rounded-[2px]" style={{ background: grad(k) }} />
-              <span className="text-[10px] text-gray-700">{l}</span>
-            </div>
-          ))}
-        </div>
 
         {/* Chart */}
         <div>
@@ -134,16 +124,25 @@ export default function App() {
                         <div key={c.code} className="shrink-0 flex items-center justify-center"
                           style={{ width: "clamp(30px, 4.1vw, 52px)", height: "22px" }}
                           title={`${shortName(c.name)}: ${s[c.code]}`}>
-                          <div className="cell-block rounded-[2px]"
+                          <div className="rounded-[2px] flex items-center justify-center"
                             style={{
                               background: grad(key),
                               opacity: 0.88,
                               width: "clamp(26px, 3.6vw, 44px)",
-                              height: "14px",
-                              filter: isHover ? `blur(0.3px) brightness(1.15) saturate(1.2)` : "none",
+                              height: "16px",
+                              filter: isHover ? "blur(0.3px) brightness(1.15) saturate(1.2)" : "none",
                               transform: isHover ? `scale(1.08) rotate(${(ci % 3 - 1) * 0.5}deg)` : "none",
                               transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                            }} />
+                            }}>
+                            <span style={{
+                              fontSize: "7px",
+                              fontWeight: 600,
+                              color: "rgba(255,255,255,0.7)",
+                              letterSpacing: "0.02em",
+                              lineHeight: 1,
+                              userSelect: "none",
+                            }}>{LABEL[key]}</span>
+                          </div>
                         </div>
                       );
                     })}
