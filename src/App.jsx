@@ -2,20 +2,23 @@ import { useState } from "react";
 import { substances, countries } from "./data/substances";
 
 const COLORS = {
-  death:       "#7f1d1d",
-  severe:      "#991b1b",
-  banned:      "#dc2626",
-  inhale:      "#dc2626",
-  banMedical:  "#9333ea",
-  decrim:      "#f97316",
-  prescription:"#3b82f6",
-  medicalOnly: "#3b82f6",
-  partial:     "#eab308",
-  grey:        "#71717a",
-  defacto:     "#22c55e",
-  legal:       "#10b981",
-  unknown:     "#27272a",
+  death:       ["#5c1010", "#8b1a2a"],
+  severe:      ["#7a1520", "#a32030"],
+  banned:      ["#c41e1e", "#e04838"],
+  inhale:      ["#c41e1e", "#e04838"],
+  banMedical:  ["#7c28c8", "#a855f7"],
+  decrim:      ["#e06010", "#f59e3b"],
+  prescription:["#2563c0", "#4d8ef7"],
+  medicalOnly: ["#2563c0", "#4d8ef7"],
+  partial:     ["#ca9a08", "#ecd34d"],
+  grey:        ["#52525b", "#7e7e8a"],
+  defacto:     ["#16a34a", "#34d67a"],
+  legal:       ["#0d9473", "#2edba8"],
+  unknown:     ["#1e1e22", "#2e2e34"],
 };
+
+const flat = (key) => COLORS[key][0];
+const grad = (key) => `linear-gradient(135deg, ${COLORS[key][0]}, ${COLORS[key][1]})`;
 
 const classify = (s) => {
   if (!s) return "unknown";
@@ -80,7 +83,7 @@ export default function App() {
         <div className="flex items-center gap-5 mb-14 flex-wrap">
           {LEGEND.map(([k, l]) => (
             <div key={k} className="flex items-center gap-1.5">
-              <span className="w-[8px] h-[8px] rounded-[2px]" style={{ background: COLORS[k] }} />
+              <span className="w-[8px] h-[8px] rounded-[2px]" style={{ background: grad(k) }} />
               <span className="text-[10px] text-gray-700">{l}</span>
             </div>
           ))}
@@ -118,12 +121,12 @@ export default function App() {
                   {/* Cells */}
                   <div className="flex items-center flex-1">
                     {countries.map(c => {
-                      const color = COLORS[classify(s[c.code])];
+                      const key = classify(s[c.code]);
                       return (
                         <div key={c.code} className="shrink-0 flex items-center justify-center" style={{ width: "clamp(32px, 4.2vw, 52px)", height: "26px" }}
                           title={`${shortName(c.name)}: ${s[c.code]}`}>
                           <div className="h-[12px] rounded-[2px] transition-transform group-hover:scale-y-[1.3]"
-                            style={{ background: color, opacity: 0.8, width: "clamp(20px, 3vw, 32px)" }} />
+                            style={{ background: grad(key), opacity: 0.85, width: "clamp(20px, 3vw, 32px)" }} />
                         </div>
                       );
                     })}
@@ -136,10 +139,10 @@ export default function App() {
                     <p className="text-[11px] text-gray-600 leading-[1.9] mb-5 max-w-2xl">{s.note}</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-8 gap-y-[5px]">
                       {countries.map(c => {
-                        const color = COLORS[classify(s[c.code])];
+                        const key = classify(s[c.code]);
                         return (
                           <div key={c.code} className="flex items-start gap-2">
-                            <span className="w-[5px] h-[5px] rounded-[1px] shrink-0 mt-[5px]" style={{ background: color }} />
+                            <span className="w-[5px] h-[5px] rounded-[1px] shrink-0 mt-[5px]" style={{ background: flat(key) }} />
                             <div className="min-w-0">
                               <span className="text-[9px] text-gray-700">{shortName(c.name)}</span>
                               <span className="text-[9px] text-gray-600 ml-1.5 truncate" title={s[c.code]}>{s[c.code]}</span>
