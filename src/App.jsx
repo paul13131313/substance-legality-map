@@ -1,46 +1,70 @@
 import { useState, useMemo } from "react";
 import { substances, countries, categories } from "./data/substances";
 
-// 判定順序: 死刑 > 非犯罪化 > 処方・医療（純粋） > 禁止/医療可 > 部分合法 > グレー > 禁止 > 合法
-const getStatusColor = (status) => {
-  if (!status) return "bg-gray-100 text-gray-400";
-  if (status.includes("死刑")) return "bg-red-900 text-white";
-  if (status.includes("禁止（厳罰）")) return "bg-red-900 text-white";
-  if (status.includes("非犯罪化")) return "bg-orange-400 text-white";
-  if ((status.includes("処方箋合法") || status.includes("処方箋必要") || status.includes("医療用合法")) && !status.includes("禁止")) return "bg-blue-500 text-white";
-  if (status.includes("処方可") && status.includes("禁止")) return "bg-purple-600 text-white";
-  if (status.includes("合法") && status.includes("禁止")) return "bg-yellow-500 text-gray-900";
-  if (status.includes("グレーゾーン") || status.includes("グレー")) return "bg-yellow-400 text-gray-800";
-  if (status.includes("禁止")) return "bg-red-500 text-white";
-  if (status.includes("議論") || status.includes("実験中")) return "bg-yellow-400 text-gray-800";
-  if (status.includes("容認") || status.includes("コーヒーショップ")) return "bg-green-600 text-white";
-  if (status.includes("合法")) return "bg-green-500 text-white";
-  return "bg-gray-200 text-gray-700";
+const STATUS_CONFIG = {
+  death:       { bg: "#450a0a", border: "#991b1b", text: "#fca5a5", label: "禁止★死刑",   dot: "#dc2626" },
+  severe:      { bg: "#450a0a", border: "#991b1b", text: "#fca5a5", label: "禁止★厳罰",   dot: "#dc2626" },
+  banned:      { bg: "#1c0a0a", border: "#7f1d1d", text: "#f87171", label: "禁止",         dot: "#ef4444" },
+  banMedical:  { bg: "#1a0a2e", border: "#6b21a8", text: "#c084fc", label: "禁止/医療可",   dot: "#a855f7" },
+  decrim:      { bg: "#1a1200", border: "#92400e", text: "#fb923c", label: "非犯罪化",     dot: "#f97316" },
+  prescription:{ bg: "#0a1628", border: "#1e40af", text: "#93c5fd", label: "処方箋のみ",   dot: "#3b82f6" },
+  medicalOnly: { bg: "#0a1628", border: "#1e40af", text: "#93c5fd", label: "医療のみ合法", dot: "#3b82f6" },
+  partial:     { bg: "#1a1a00", border: "#a16207", text: "#fbbf24", label: "部分合法",     dot: "#eab308" },
+  grey:        { bg: "#1a1a00", border: "#a16207", text: "#fde047", label: "グレー",       dot: "#facc15" },
+  defacto:     { bg: "#0a1a0a", border: "#166534", text: "#86efac", label: "事実上合法",   dot: "#22c55e" },
+  legal:       { bg: "#0a1a0a", border: "#166534", text: "#4ade80", label: "合法",         dot: "#22c55e" },
+  unknown:     { bg: "#111", border: "#333", text: "#666", label: "-",               dot: "#444" },
+  inhale:      { bg: "#1c0a0a", border: "#7f1d1d", text: "#f87171", label: "吸引目的禁止", dot: "#ef4444" },
 };
 
-const getShortStatus = (status) => {
-  if (!status) return "-";
-  if (status.includes("死刑")) return "禁止★死刑";
-  if (status.includes("禁止（厳罰）")) return "禁止★厳罰";
-  if (status.includes("非犯罪化")) return "非犯罪化";
-  if ((status.includes("処方箋合法") || status.includes("処方箋必要")) && !status.includes("禁止")) return "処方箋のみ";
-  if (status.includes("医療用合法") && !status.includes("禁止")) return "医療のみ合法";
-  if (status.includes("処方可") && status.includes("禁止")) return "禁止/医療可";
-  if (status.includes("禁止（吸引目的）")) return "吸引目的禁止";
-  if (status.includes("合法") && status.includes("禁止")) return "部分合法";
-  if (status.includes("グレーゾーン") || status.includes("グレー")) return "グレー";
-  if (status.includes("容認") || status.includes("コーヒーショップ")) return "事実上合法";
-  if (status.includes("合法（無規制）")) return "合法（規制なし）";
-  if (status.includes("合法")) return "合法";
-  if (status.includes("禁止")) return "禁止";
-  return status.substring(0, 12);
+const getStatusKey = (status) => {
+  if (!status) return "unknown";
+  if (status.includes("死刑")) return "death";
+  if (status.includes("禁止（厳罰）")) return "severe";
+  if (status.includes("非犯罪化")) return "decrim";
+  if ((status.includes("処方箋合法") || status.includes("処方箋必要") || status.includes("医療用合法")) && !status.includes("禁止")) {
+    if (status.includes("医療用合法")) return "medicalOnly";
+    return "prescription";
+  }
+  if (status.includes("処方可") && status.includes("禁止")) return "banMedical";
+  if (status.includes("禁止（吸引目的）")) return "inhale";
+  if (status.includes("合法") && status.includes("禁止")) return "partial";
+  if (status.includes("グレーゾーン") || status.includes("グレー")) return "grey";
+  if (status.includes("禁止")) return "banned";
+  if (status.includes("容認") || status.includes("コーヒーショップ")) return "defacto";
+  if (status.includes("合法")) return "legal";
+  return "unknown";
 };
+
+const getConfig = (status) => STATUS_CONFIG[getStatusKey(status)];
+
+const depLabel = (dep) => {
+  if (dep.includes("非常に高")) return { text: "EXTREME", color: "#ef4444" };
+  if (dep.includes("高")) return { text: "HIGH", color: "#f97316" };
+  if (dep.includes("中〜高")) return { text: "MED-HIGH", color: "#f59e0b" };
+  if (dep.includes("中")) return { text: "MEDIUM", color: "#eab308" };
+  if (dep.includes("低〜中")) return { text: "LOW-MED", color: "#84cc16" };
+  if (dep.includes("低")) return { text: "LOW", color: "#22c55e" };
+  return { text: dep, color: "#888" };
+};
+
+const LEGEND = [
+  { key: "legal", label: "合法" },
+  { key: "defacto", label: "事実上合法" },
+  { key: "partial", label: "部分合法" },
+  { key: "prescription", label: "処方箋/医療" },
+  { key: "banMedical", label: "禁止/医療可" },
+  { key: "decrim", label: "非犯罪化" },
+  { key: "grey", label: "グレー" },
+  { key: "banned", label: "禁止" },
+  { key: "death", label: "厳罰/死刑" },
+];
 
 export default function App() {
   const [selectedCategory, setSelectedCategory] = useState("すべて");
-  const [selectedCountries, setSelectedCountries] = useState(["JP", "US", "NL", "DE", "PT", "AU", "CA", "UK", "SG"]);
+  const [selectedCountries, setSelectedCountries] = useState(["JP","US","NL","DE","PT","TH","AU","CA","UK","CN","SG","KR"]);
   const [search, setSearch] = useState("");
-  const [showDetail, setShowDetail] = useState(null);
+  const [expandedIdx, setExpandedIdx] = useState(null);
   const [showNewOnly, setShowNewOnly] = useState(false);
 
   const filtered = useMemo(() => {
@@ -58,176 +82,169 @@ export default function App() {
     );
   };
 
-  const legend = [
-    { color: "bg-green-500", label: "合法" },
-    { color: "bg-green-600", label: "事実上合法" },
-    { color: "bg-yellow-500", label: "部分合法（一部禁止）" },
-    { color: "bg-blue-500", label: "処方箋/医療のみ" },
-    { color: "bg-purple-600", label: "禁止/医療可" },
-    { color: "bg-orange-400", label: "非犯罪化" },
-    { color: "bg-yellow-400", label: "グレーゾーン" },
-    { color: "bg-red-500", label: "禁止" },
-    { color: "bg-red-900", label: "禁止（厳罰・死刑）" },
-  ];
+  const activeCountries = countries.filter(c => selectedCountries.includes(c.code));
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-4 font-sans">
-      <h1 className="text-2xl font-bold mb-1 text-white">🌏 依存性物質 国際合法性マップ</h1>
-      <p className="text-gray-400 text-sm">{substances.length}種の依存性物質 × {countries.length}カ国の法的地位</p>
-
-      {/* Data timestamp */}
-      <div className="flex flex-wrap gap-2 mt-2 mb-4 text-xs">
-        <span className="bg-gray-800 border border-gray-600 px-2 py-1 rounded text-gray-300">
-          📅 データ最終確認：<strong className="text-white">2025年2月</strong>（法律は随時変更されます）
-        </span>
-        <span className="bg-yellow-950 border border-yellow-700 px-2 py-1 rounded text-yellow-300">
-          🆕 = 2024年以降に主要な変化があった物質
-        </span>
-        <span className="bg-gray-900 border border-red-800 px-2 py-1 rounded text-gray-500">
-          ⚠️ 参考情報のみ。渡航前は各国の公式情報を必ず確認
-        </span>
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {legend.map(l => (
-          <span key={l.label} className={`${l.color} text-white text-xs px-2 py-1 rounded`}>{l.label}</span>
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-wrap gap-2 mb-3 items-center">
-        <input
-          className="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-sm text-white placeholder-gray-500 w-48"
-          placeholder="物質名・キーワード検索..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <button
-          onClick={() => setShowNewOnly(!showNewOnly)}
-          className={`text-xs px-3 py-1 rounded border transition-colors ${showNewOnly ? "bg-yellow-700 border-yellow-500 text-white" : "bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"}`}
-        >
-          🆕 2024年以降の変化のみ表示
-        </button>
-      </div>
-
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-1 mb-4">
-        {categories.map(c => (
-          <button
-            key={c}
-            onClick={() => setSelectedCategory(c)}
-            className={`text-xs px-2 py-1 rounded border transition-colors ${selectedCategory === c ? "bg-indigo-600 border-indigo-500 text-white" : "bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"}`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-
-      {/* Country Toggle */}
-      <div className="flex flex-wrap gap-1 mb-4">
-        <span className="text-xs text-gray-500 self-center mr-1">国を選択:</span>
-        {countries.map(c => (
-          <button
-            key={c.code}
-            onClick={() => toggleCountry(c.code)}
-            className={`text-xs px-2 py-1 rounded border transition-colors ${selectedCountries.includes(c.code) ? "bg-teal-700 border-teal-500 text-white" : "bg-gray-800 border-gray-700 text-gray-500"}`}
-          >
-            {c.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-700">
-        <table className="text-xs border-collapse min-w-full">
-          <thead>
-            <tr className="bg-gray-800">
-              <th className="text-left px-3 py-2 border-b border-gray-700 text-gray-300 min-w-36 sticky left-0 bg-gray-800 z-10">物質</th>
-              <th className="text-left px-2 py-2 border-b border-gray-700 text-gray-400 min-w-20">カテゴリ</th>
-              <th className="text-left px-2 py-2 border-b border-gray-700 text-gray-400 min-w-16">依存性</th>
-              {countries.filter(c => selectedCountries.includes(c.code)).map(c => (
-                <th key={c.code} className="px-2 py-2 border-b border-gray-700 text-gray-300 min-w-20 text-center">{c.name}</th>
-              ))}
-              <th className="text-left px-2 py-2 border-b border-gray-700 text-gray-500 min-w-16">確認日</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((s, i) => (
-              <tr
-                key={i}
-                className="border-b border-gray-800 hover:bg-gray-800 cursor-pointer transition-colors"
-                onClick={() => setShowDetail(showDetail === i ? null : i)}
-              >
-                <td className="px-3 py-2 font-medium text-white sticky left-0 bg-gray-900 hover:bg-gray-800 border-r border-gray-800">
-                  <div className="flex items-center gap-1">
-                    {s.newFlag && <span className="text-yellow-400">🆕</span>}
-                    <span>{s.name}</span>
-                  </div>
-                  <div className="text-gray-500">{s.route}</div>
-                </td>
-                <td className="px-2 py-2 text-gray-400">{s.category}</td>
-                <td className="px-2 py-2 text-gray-300">{s.dependence}</td>
-                {countries.filter(c => selectedCountries.includes(c.code)).map(c => {
-                  const status = s[c.code];
-                  return (
-                    <td key={c.code} className="px-1 py-1 text-center">
-                      <span className={`inline-block text-xs px-1 py-0.5 rounded ${getStatusColor(status)}`}>
-                        {getShortStatus(status)}
-                      </span>
-                    </td>
-                  );
-                })}
-                <td className="px-2 py-2 text-gray-600">{s.updated}</td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={99} className="text-center py-8 text-gray-500">該当する物質が見つかりません</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Detail Panel */}
-      {showDetail !== null && filtered[showDetail] && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-600 p-4 shadow-2xl z-50 max-h-80 overflow-y-auto">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h2 className="text-lg font-bold text-white">{filtered[showDetail].name}</h2>
-              <span className="text-xs text-gray-500">データ確認: {filtered[showDetail].updated}</span>
-            </div>
-            <button onClick={() => setShowDetail(null)} className="text-gray-400 hover:text-white text-xl ml-4">✕</button>
+    <div className="min-h-screen bg-[#08090c] text-gray-100" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* Header */}
+      <header className="border-b border-white/5 px-6 py-5">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="text-3xl">🌏</span>
+            <h1 className="text-2xl font-bold tracking-tight text-white">依存性物質 国際合法性マップ</h1>
           </div>
-          <p className="text-gray-300 text-sm mb-3">{filtered[showDetail].note}</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
-            {countries.map(c => (
-              <div key={c.code} className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 w-20 shrink-0">{c.name}</span>
-                <span
-                  className={`text-xs px-1 py-0.5 rounded flex-1 text-center truncate ${getStatusColor(filtered[showDetail][c.code])}`}
-                  title={filtered[showDetail][c.code]}
-                >
-                  {getShortStatus(filtered[showDetail][c.code])}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 border-t border-gray-700 pt-3">
-            <p className="text-xs text-gray-500 mb-1">詳細（選択中の国）:</p>
-            <div className="space-y-1">
-              {countries.filter(c => selectedCountries.includes(c.code)).map(c => (
-                <div key={c.code} className="text-xs text-gray-400">
-                  <span className="text-gray-300">{c.name}</span>: {filtered[showDetail][c.code]}
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="text-sm text-gray-500 ml-12">{substances.length}種 × {countries.length}カ国 — 依存性が高い順・違法性が高い順に並んでいます</p>
         </div>
-      )}
+      </header>
 
-      <p className="text-gray-700 text-xs mt-4">
-        ※ 法律は随時変更されます。この情報は参考目的のみです。渡航・ビジネス等の実際の判断には各国の公式情報・専門家にご相談ください。
-      </p>
+      <div className="max-w-[1800px] mx-auto px-6 py-4">
+        {/* Info bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-5 text-xs">
+          <span className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400">
+            📅 2025年2月確認
+          </span>
+          <span className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400">
+            🆕 2024年〜変化あり
+          </span>
+          <span className="px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400/60">
+            ⚠️ 参考情報のみ
+          </span>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-1.5 mb-5">
+          {LEGEND.map(l => {
+            const c = STATUS_CONFIG[l.key];
+            return (
+              <span key={l.key} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
+                style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: c.dot }} />
+                {l.label}
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+          <div className="relative">
+            <input
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 w-52 focus:outline-none focus:border-white/25 transition-colors"
+              placeholder="検索..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setShowNewOnly(!showNewOnly)}
+            className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${showNewOnly ? "bg-amber-500/20 border-amber-500/40 text-amber-300" : "bg-white/5 border-white/10 text-gray-500 hover:text-gray-300 hover:border-white/20"}`}
+          >
+            🆕 最新の変化のみ
+          </button>
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {categories.map(c => (
+            <button key={c} onClick={() => setSelectedCategory(c)}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${selectedCategory === c ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" : "bg-white/5 border-white/10 text-gray-500 hover:text-gray-300 hover:border-white/20"}`}
+            >{c}</button>
+          ))}
+        </div>
+
+        {/* Country Toggle */}
+        <div className="flex flex-wrap gap-1.5 mb-6">
+          <span className="text-xs text-gray-600 self-center mr-1">国:</span>
+          {countries.map(c => (
+            <button key={c.code} onClick={() => toggleCountry(c.code)}
+              className={`text-xs px-2 py-1 rounded-md border transition-all ${selectedCountries.includes(c.code) ? "bg-teal-500/15 border-teal-500/30 text-teal-300" : "bg-white/3 border-white/8 text-gray-600 hover:text-gray-400"}`}
+            >{c.name}</button>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="space-y-2">
+          {filtered.map((s, i) => {
+            const dep = depLabel(s.dependence);
+            const isExpanded = expandedIdx === i;
+            return (
+              <div key={i}
+                className="rounded-xl border transition-all cursor-pointer group"
+                style={{
+                  background: isExpanded ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)",
+                  borderColor: isExpanded ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                }}
+                onClick={() => setExpandedIdx(isExpanded ? null : i)}
+              >
+                {/* Main row */}
+                <div className="px-4 py-3">
+                  {/* Substance name + meta */}
+                  <div className="flex items-start justify-between gap-4 mb-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {s.newFlag && <span className="text-amber-400 text-xs shrink-0">🆕</span>}
+                      <span className="text-sm font-semibold text-white truncate">{s.name}</span>
+                      <span className="text-xs text-gray-600 shrink-0">{s.route}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md"
+                        style={{ background: `${dep.color}15`, color: dep.color, border: `1px solid ${dep.color}30` }}>
+                        {dep.text}
+                      </span>
+                      <span className="text-[10px] text-gray-600 px-2 py-0.5 rounded-md bg-white/5">{s.category}</span>
+                    </div>
+                  </div>
+
+                  {/* Country status grid */}
+                  <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(activeCountries.length, 12)}, minmax(0, 1fr))` }}>
+                    {activeCountries.map(c => {
+                      const status = s[c.code];
+                      const cfg = getConfig(status);
+                      return (
+                        <div key={c.code} className="rounded-lg px-1.5 py-1.5 text-center transition-all group-hover:scale-[1.01]"
+                          style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+                          title={`${c.name}: ${status}`}
+                        >
+                          <div className="text-[9px] text-gray-500 mb-0.5 leading-tight truncate">{c.name.replace(/^.+\s/, '')}</div>
+                          <div className="text-[10px] font-medium leading-tight truncate" style={{ color: cfg.text }}>{cfg.label}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-white/5 pt-3">
+                    <p className="text-xs text-gray-400 mb-3 leading-relaxed">{s.note}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+                      {countries.map(c => {
+                        const status = s[c.code];
+                        const cfg = getConfig(status);
+                        return (
+                          <div key={c.code} className="flex items-center gap-2 rounded-lg px-2 py-1.5"
+                            style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                            <span className="text-[10px] text-gray-500 w-16 shrink-0">{c.name}</span>
+                            <span className="text-[10px] truncate" style={{ color: cfg.text }} title={status}>{status}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 text-[10px] text-gray-600">📅 データ確認: {s.updated}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="text-center py-16 text-gray-600">該当する物質が見つかりません</div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <p className="text-gray-700 text-xs mt-8 mb-4 text-center">
+          ※ 法律は随時変更されます。参考情報のみ。渡航・ビジネス等の実際の判断には各国の公式情報・専門家にご相談ください。
+        </p>
+      </div>
     </div>
   );
 }
