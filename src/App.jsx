@@ -35,13 +35,13 @@ const classify = (s) => {
 };
 
 const depColor = (d) => {
-  if (d.includes("非常に高")) return "#ef4444";
-  if (d.includes("高")) return "#f97316";
-  if (d.includes("中〜高")) return "#f59e0b";
-  if (d.includes("中")) return "#eab308";
-  if (d.includes("低〜中")) return "#a3e635";
-  if (d.includes("低")) return "#22c55e";
-  return "#555";
+  if (d.includes("非常に高")) return "#e5e5e5";
+  if (d.includes("高")) return "#a3a3a3";
+  if (d.includes("中〜高")) return "#737373";
+  if (d.includes("中")) return "#525252";
+  if (d.includes("低〜中")) return "#3f3f46";
+  if (d.includes("低")) return "#27272a";
+  return "#1c1c1e";
 };
 
 const shortName = (name) => name.replace(/^.+\s/, "");
